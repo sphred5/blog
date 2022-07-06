@@ -1,21 +1,27 @@
 import PostConent from "../../components/post-detail/post-content.js";
-import { getPostData } from "../../lib/post-util.js";
+import { getPostData, getPostFiles } from "../../lib/post-util.js";
 
-const PostDetailPage = () => {
-  return <PostConent />;
+const PostDetailPage = (props) => {
+  return <PostConent post={props.post} />;
 };
+
 export function getStaticProps(context) {
   const { params } = context;
+  const slug = params.slug;
+  const post = getPostData(slug);
   return {
     props: {
-      post: getPostData(params.slug),
+      post: post,
     },
     revalidate: 600,
   };
 }
 export function getStaticPaths() {
+  const postFileNames = getPostFiles();
+  const slugs = postFileNames.map((postFile) => postFile.replace(/\.md$/, ""));
+  console.log(slugs);
   return {
-    paths: [],
+    paths: slugs.map((slug) => ({ params: { slug: slug } })),
     fallback: false,
   };
 }
