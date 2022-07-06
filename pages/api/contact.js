@@ -1,4 +1,6 @@
-function handler(req, res) {
+import { MongoClient } from 'mongodb';
+
+async function handler(req, res) {
   if (req.method === "POST") {
     const { email, name, message } = req.body;
 
@@ -18,9 +20,33 @@ function handler(req, res) {
       name,
       message,
     };
-    console.log(newMessage);
-    res.status(201).json({ message: "Message Sent!", message: newMessage });
+
+    let client;
+    try {
+      client = await MongoClient.connect(process.env.DB_URL);
+
+    } catch (error) {
+      res.status(500).json({
+        message: "error connecting to database"
+      })
+      return;
+    }
+
+    const db = client.db("blog");
+
+    try {
+      const result = await db.collection("contact-form").insertOne(newMessage);
+      res.status(201).json({ message: "Message Sent!", message: newMessage });
+      newMessage.id = result.insertedId;
+      client.close();
+      return result;
+
+    } catch (error) {
+      client.close();
+      res.status(500).json({ message: "error inserting data" })
+      return;
+    }
   }
 }
 
-export default handler();
+export default handler;
